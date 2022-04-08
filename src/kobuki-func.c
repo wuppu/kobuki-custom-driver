@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <netinet/in.h>
+#include <math.h>
 
 // Linux headers
 #include <fcntl.h> // Contains file controls like O_RDWR
@@ -16,6 +17,8 @@
 
 // User headers
 #include "kobuki.h"
+
+#define _USE_MATH_DEFINES
 
 /**
  * @brief hex dump 출력
@@ -322,7 +325,33 @@ int ParseScriptCommand(char *script_file, struct MIB *mib)
         fclose(fp);
         return -1;
       }
-      mib->script_lines[line].radius = (int)(atof(ptr) * 1000);
+      mib->script_lines[line].radius = (int)(atof(ptr));
+      if (mib->script_lines[line].radius > 1) {
+        mib->script_lines[line].radius += 115;
+      }
+      else if (mib->script_lines[line].radius < -1) {
+        mib->script_lines[line].radius -= 115;
+      }
+
+      /**
+       * radian
+       * input: degree 단위
+       * output: radian 단위
+       */
+      ptr = strtok(NULL, " ");
+      if (ptr == NULL) {
+        PrintLog(kMessageType_Error, "Fail to load script command line - line: %d\n", file_line);
+        fclose(fp);
+        return -1;
+      }
+      if (mib->script_lines[line].radius <= 1 && mib->script_lines[line].radius >= -1) {
+        mib->script_lines[line].radian = atof(ptr) * M_PI;
+      }
+      else {
+        mib->script_lines[line].radian = (atof(ptr) * M_PI) / 90;
+      }
+      
+      // mib->script_lines[line].radian = atoi(ptr);
 
       /**
        * distance
@@ -338,7 +367,21 @@ int ParseScriptCommand(char *script_file, struct MIB *mib)
       mib->script_lines[line].distance = (int)(atof(ptr) * 1000);
 
       // move_time 이동 시간 ms 단위
-      float move_time = ((float)mib->script_lines[line].distance / (float)mib->script_lines[line].speed);
+      float move_time;
+      if (mib->script_lines[line].radius >= 1 || mib->script_lines[line].radius <= -1) {
+        move_time = (float)((mib->script_lines[line].radius) * mib->script_lines[line].radian) / (float)mib->script_lines[line].speed;
+      }
+      else if (mib->script_lines[line].radius == 0) {
+        move_time = ((float)mib->script_lines[line].distance / (float)mib->script_lines[line].speed);
+      }
+
+      if (mib->script_lines[line].speed == 0) {
+        move_time = 0;
+      }
+
+      if (move_time < 0) {
+        move_time *= -1;
+      }
       move_time = (int)(move_time * 1000);
       mib->script_lines[line].move_time = move_time;
     }
@@ -394,8 +437,8 @@ int ParseScriptCommand(char *script_file, struct MIB *mib)
         PrintLog(kMessageType_Debug, "#%d: None\n", i); 
         break;
       case kCommandType_Speed: 
-        PrintLog(kMessageType_Debug, "#%d: Speed - speed: %dmm/s, radius: %dmm, distance: %dmm, move_time: %dms\n", 
-                i, mib->script_lines[i].speed, mib->script_lines[i].radius, mib->script_lines[i].distance, mib->script_lines[i].move_time); 
+        PrintLog(kMessageType_Debug, "#%d: Speed - speed: %dmm/s, radius: %dmm, radian: %lf, distance: %dmm, move_time: %dms\n", 
+                i, mib->script_lines[i].speed, mib->script_lines[i].radius, mib->script_lines[i].radian, mib->script_lines[i].distance, mib->script_lines[i].move_time); 
         break;
       case kCommandType_Sleep: 
         PrintLog(kMessageType_Debug, "#%d: Sleep - time: %dms\n", i, mib->script_lines[i].delay); 

@@ -116,6 +116,7 @@ struct ScriptLine
   CommandType type;
   int speed; ///< 이동 속도 mm/s 단위
   int radius; ///< 회전 반경 mm 단위
+	float radian; ///< 회전 각도
 	int distance; ///< 이동 거리 mm 단위
 	int move_time; ///< 속도, 이동 거리로 이동 시간 계산 ms 단위
 

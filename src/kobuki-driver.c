@@ -33,6 +33,7 @@ static void TerminateEvent(int signum)
   (void)signum;
 
   PrintLog(kMessageType_Info, "Application terminating\n");
+	KOBUKI_ControlSpeed(g_mib.device, 0, 0);
   if (g_mib.device < 0) {
     close(g_mib.device);
   }
@@ -214,6 +215,7 @@ int main(int argc, char* argv[])
   }
 
   /* 초기 동작 LED 점등 (3초) */
+	KOBUKI_ControlSpeed(g_mib.device, 0, 0);
   KOBUKI_ControlLED(g_mib.device, 1, kLEDColor_None);
   KOBUKI_ControlLED(g_mib.device, 2, kLEDColor_None);
   sleep(1);  

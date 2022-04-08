@@ -1,0 +1,20 @@
+# sleep <sleep_time ms>
+# speed <speed km/h> <radius m> <distance m>
+# led <led_number> <led_color 0: 0ff, 1: green, 2: red>
+
+# Example
+#led 1 2
+#sleep 1
+#led 2 2
+#sleep 1
+
+#speed -100 0
+#sleep 3000
+#speed 100 0
+#sleep 3000
+speed 3 0 3
+sleep 3000
+#speed 100 -1
+#sleep 1000
+#speed -100 0
+#sleep 3000
